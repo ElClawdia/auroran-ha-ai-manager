@@ -2,12 +2,25 @@ from __future__ import annotations
 
 import argparse
 import time
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from auroran_ha_ai_manager.alerts import AlertEngine, Notifier
 from auroran_ha_ai_manager.config import Settings
 from auroran_ha_ai_manager.ha_client import HomeAssistantClient
+from auroran_ha_ai_manager.influx_memory import InfluxMemoryWriter
 from auroran_ha_ai_manager.mqtt_client import MqttIngestor
 from auroran_ha_ai_manager.optimizer import Optimizer
+
+
+def _in_bedroom_off_window(settings: Settings) -> bool:
+    tz = ZoneInfo(settings.local_timezone)
+    h = datetime.now(tz).hour
+    start = settings.bedroom_hp_off_start_hour
+    end = settings.bedroom_hp_off_end_hour
+    if start <= end:
+        return start <= h < end
+    return h >= start or h < end
 
 
 def _healthcheck(settings: Settings) -> int:
@@ -36,6 +49,15 @@ def _run_cycle(settings: Settings) -> int:
     notifier = Notifier()
     ha = HomeAssistantClient(settings.ha_base_url, settings.ha_token)
 
+    memory: InfluxMemoryWriter | None = None
+    if settings.influxdb_url and settings.influxdb_token:
+        memory = InfluxMemoryWriter(
+            url=settings.influxdb_url,
+            token=settings.influxdb_token,
+            org=settings.influxdb_org,
+            bucket=settings.influxdb_ai_memory_bucket,
+        )
+
     mqtt_ingestor: MqttIngestor | None = None
     mqtt_topics: list[str] = []
     if settings.mqtt_topics:
@@ -54,6 +76,25 @@ def _run_cycle(settings: Settings) -> int:
             time.sleep(1.5)
 
         states = ha.get_states()
+        by_id = {e.get("entity_id"): e for e in states if e.get("entity_id")}
+
+        # Hard policy: bedroom heat pump OFF between 19:00-09:00 Helsinki.
+        if _in_bedroom_off_window(settings):
+            bedroom = by_id.get(settings.bedroom_hp_entity)
+            if bedroom and bedroom.get("state") != "off":
+                ha.call_service("climate", "set_hvac_mode", {"entity_id": settings.bedroom_hp_entity, "hvac_mode": "off"})
+                notifier.send(
+                    f"Policy enforced: {settings.bedroom_hp_entity} turned OFF "
+                    f"for quiet window {settings.bedroom_hp_off_start_hour}:00-{settings.bedroom_hp_off_end_hour}:00 "
+                    f"({settings.local_timezone})."
+                )
+                if memory:
+                    memory.write_action(
+                        service="climate.set_hvac_mode",
+                        entity_id=settings.bedroom_hp_entity,
+                        result="off",
+                        reason="bedroom_off_window_policy",
+                    )
 
         # TODO: wire real price series from HA/MQTT connectors.
         current_price = None
@@ -72,6 +113,15 @@ def _run_cycle(settings: Settings) -> int:
                     f"RECOMMENDATION (advice-only): {rec.target_entity} -> {rec.proposed_value} "
                     f"[{rec.action}] because {rec.reason} (confidence={rec.confidence:.2f})"
                 )
+                if memory:
+                    memory.write_recommendation(
+                        {
+                            "action": rec.action,
+                            "target_entity": rec.target_entity,
+                            "reason": rec.reason,
+                            "confidence": rec.confidence,
+                        }
+                    )
 
         if alerts:
             for alert in alerts:
@@ -79,6 +129,23 @@ def _run_cycle(settings: Settings) -> int:
 
         if not recommendations and not alerts:
             notifier.send("Auroran HA AI Manager: cycle complete, no actions.")
+
+        # Persist episodic snapshot for ML/features.
+        if memory:
+            memory.write_entity_snapshot(states)
+            try:
+                hashrate = float(by_id.get("sensor.miner_hashrate_gh", {}).get("state"))
+            except Exception:
+                hashrate = None
+            try:
+                cost_h = float(by_id.get("sensor.mining_hourly_cost", {}).get("state"))
+            except Exception:
+                cost_h = None
+            try:
+                revenue_h = float(by_id.get("sensor.miner_rewards_hourly", {}).get("state"))
+            except Exception:
+                revenue_h = None
+            memory.write_profitability(hashrate_gh=hashrate, revenue_h=revenue_h, cost_h=cost_h)
 
         return 0
     finally:

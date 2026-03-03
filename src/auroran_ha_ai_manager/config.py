@@ -25,5 +25,15 @@ class Settings(BaseSettings):
     mqtt_password: str | None = Field(default=None, alias="MQTT_PASSWORD")
     mqtt_topics: str | None = Field(default=None, alias="MQTT_TOPICS")
 
+    influxdb_url: str | None = Field(default=None, alias="INFLUXDB_URL")
+    influxdb_token: str | None = Field(default=None, alias="INFLUXDB_TOKEN")
+    influxdb_org: str = Field(default="auroran", alias="INFLUXDB_ORG")
+    influxdb_ai_memory_bucket: str = Field(default="ha_ai_memory", alias="INFLUXDB_AI_MEMORY_BUCKET")
+
+    bedroom_hp_entity: str = Field(default="climate.ac_12488762", alias="BEDROOM_HP_ENTITY")
+    bedroom_hp_off_start_hour: int = Field(default=19, alias="BEDROOM_HP_OFF_START_HOUR")
+    bedroom_hp_off_end_hour: int = Field(default=9, alias="BEDROOM_HP_OFF_END_HOUR")
+    local_timezone: str = Field(default="Europe/Helsinki", alias="LOCAL_TIMEZONE")
+
     auto_apply: bool = Field(default=False, alias="AUTO_APPLY")
     poll_interval_seconds: int = Field(default=300, alias="POLL_INTERVAL_SECONDS")

@@ -274,6 +274,10 @@ Next step: implement concrete connectors (HA + price/weather source) and first r
 For ML-centric roadmap (location intelligence, InfluxDB + PostgreSQL hybrid), see:
 - [`docs/ML_STRATEGY.md`](docs/ML_STRATEGY.md)
 
+For memory implementation details (Influx episodic memory + markdown long-term memory), see:
+- [`docs/LEARNINGS_MEMORY.md`](docs/LEARNINGS_MEMORY.md)
+- [`docs/SKILL_MEMORY_INFLUX.md`](docs/SKILL_MEMORY_INFLUX.md)
+
 ## License
 
 MIT License. See [LICENSE](LICENSE).

@@ -41,7 +41,14 @@ class Optimizer:
             except (TypeError, ValueError):
                 continue
             unit = str(state.get("attributes", {}).get("unit_of_measurement", ""))
-            if unit in {"°C", "C", "celsius"} and temp < 19.5:
+            fname = str(state.get("attributes", {}).get("friendly_name", "")).lower()
+            is_outdoor = any(k in entity_id for k in ["openweathermap", "outdoor", "outside", "weather"])
+            looks_room_temp = (
+                entity_id.startswith("sensor.temperature_")
+                or ("temperature" in entity_id and "miner" not in entity_id and "inlet" not in entity_id and "outlet" not in entity_id)
+                or ("temperature" in fname and "miner" not in fname)
+            )
+            if unit in {"°C", "C", "celsius"} and temp < 19.5 and not is_outdoor and looks_room_temp:
                 low_temp_sensors.append((entity_id, temp))
 
         if current_price is not None and upcoming_prices:
