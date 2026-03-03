@@ -278,6 +278,9 @@ For memory implementation details (Influx episodic memory + markdown long-term m
 - [`docs/LEARNINGS_MEMORY.md`](docs/LEARNINGS_MEMORY.md)
 - [`docs/SKILL_MEMORY_INFLUX.md`](docs/SKILL_MEMORY_INFLUX.md)
 
+For voice gateway setup (Alexa -> Clawdia):
+- [`docs/ALEXA_TO_CLAWDIA_SETUP.md`](docs/ALEXA_TO_CLAWDIA_SETUP.md)
+
 ## License
 
 MIT License. See [LICENSE](LICENSE).
