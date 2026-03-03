@@ -2,7 +2,7 @@
 
 ## Goal
 Turn HA + activity + location signals into actionable coaching context:
-- where Tapio is (home office, outside, pool, gym, ski tracks)
+- where the user is (home office, outside, pool, gym, ski tracks)
 - what usually follows each location pattern
 - what action is optimal now (comfort, energy, training readiness)
 

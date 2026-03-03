@@ -88,7 +88,7 @@ export const handler = async (event) => {
 
     const payload = {
       source: 'alexa',
-      user: 'tapio',
+      user: 'owner',
       text: msg,
       ts: new Date().toISOString()
     };
@@ -145,7 +145,7 @@ Your OpenClaw side should accept payload:
 ```json
 {
   "source": "alexa",
-  "user": "tapio",
+  "user": "owner",
   "text": "turn hallway pump off",
   "ts": "2026-03-03T17:00:00Z"
 }

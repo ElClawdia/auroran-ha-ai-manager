@@ -38,7 +38,7 @@ class Settings(BaseSettings):
     comfort_temp_low_c: float = Field(default=20.0, alias="COMFORT_TEMP_LOW_C")
     expensive_price_c_per_kwh: float = Field(default=10.0, alias="EXPENSIVE_PRICE_C_PER_KWH")
     indoor_temp_sensor_ids: str = Field(
-        default="sensor.temperature_tapio_s_office,sensor.temperature_bedroom,sensor.temperature_seestymishuone,sensor.temperature_living_room",
+        default="sensor.temperature_office,sensor.temperature_bedroom,sensor.temperature_seestymishuone,sensor.temperature_living_room",
         alias="INDOOR_TEMP_SENSOR_IDS",
     )
     local_timezone: str = Field(default="Europe/Helsinki", alias="LOCAL_TIMEZONE")

@@ -135,9 +135,9 @@ def _run_cycle(settings: Settings) -> int:
                     memory.write_action("climate.set_hvac_mode", settings.bedroom_hp_entity, "off", "expensive_price_policy")
 
             hallway = by_id.get(settings.hallway_hp_entity)
-            office_temp = _get_float_state(by_id, "sensor.temperature_tapio_s_office")
-            if hallway and office_temp is not None:
-                if office_temp < settings.comfort_temp_low_c:
+            representative_temp = min(indoor_vals) if indoor_vals else None
+            if hallway and representative_temp is not None:
+                if representative_temp < settings.comfort_temp_low_c:
                     ha.call_service("climate", "set_hvac_mode", {"entity_id": settings.hallway_hp_entity, "hvac_mode": "heat"})
                     ha.call_service("climate", "set_temperature", {"entity_id": settings.hallway_hp_entity, "temperature": settings.comfort_temp_low_c})
                     if memory:

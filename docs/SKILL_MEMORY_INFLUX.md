@@ -32,7 +32,7 @@ from(bucket: "ha_ai_memory")
 ```flux
 from(bucket: "ha_ai_memory")
   |> range(start: -7d)
-  |> filter(fn: (r) => r._measurement == "ha_event" and r.entity_id == "sensor.temperature_tapio_s_office")
+  |> filter(fn: (r) => r._measurement == "ha_event" and r.entity_id == "sensor.temperature_office")
 ```
 
 ## Design notes
