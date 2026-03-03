@@ -110,11 +110,8 @@ def _run_cycle(settings: Settings) -> int:
                     )
 
         # Temperature policy: if room temperatures are above threshold, keep both heat pumps off.
-        indoor_refs = [
-            _get_float_state(by_id, "sensor.temperature_tapio_s_office"),
-            _get_float_state(by_id, "sensor.temperature_makuuhuone"),
-            _get_float_state(by_id, "sensor.temperature_olohuone"),
-        ]
+        indoor_sensor_ids = [x.strip() for x in settings.indoor_temp_sensor_ids.split(",") if x.strip()]
+        indoor_refs = [_get_float_state(by_id, eid) for eid in indoor_sensor_ids]
         indoor_vals = [v for v in indoor_refs if v is not None]
         indoor_max = max(indoor_vals) if indoor_vals else None
 
