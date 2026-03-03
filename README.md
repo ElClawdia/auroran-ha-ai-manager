@@ -213,3 +213,7 @@ Scaffold created with modular components:
 - main orchestration entrypoint
 
 Next step: implement concrete connectors (HA + price/weather source) and first rule set.
+
+## License
+
+MIT License. See [LICENSE](LICENSE).
