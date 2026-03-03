@@ -7,6 +7,11 @@ __pycache__/
 .venv/
 venv/
 .env
+.env.*
+*.json
+*.log
+logs/
+logs/**
 .pytest_cache/
 .mypy_cache/
 .DS_Store
