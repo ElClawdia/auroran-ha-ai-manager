@@ -246,6 +246,9 @@ Scaffold created with modular components:
 
 Next step: implement concrete connectors (HA + price/weather source) and first rule set.
 
+For ML-centric roadmap (location intelligence, InfluxDB + PostgreSQL hybrid), see:
+- [`docs/ML_STRATEGY.md`](docs/ML_STRATEGY.md)
+
 ## License
 
 MIT License. See [LICENSE](LICENSE).
