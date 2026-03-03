@@ -232,6 +232,31 @@ Expected response includes `"message": "API running."`
 - Prefer dedicated HA user/token for this app.
 - Start in recommendation mode (`AUTO_APPLY=false`).
 
+### MQTT setup (optional, recommended)
+
+If indoor temperatures / prices are published over MQTT, set:
+
+```bash
+MQTT_HOST=192.168.0.220
+MQTT_PORT=1883
+MQTT_USERNAME=...
+MQTT_PASSWORD=...
+MQTT_TOPICS=sensors/temperature/#,prices/crypto/#
+```
+
+### CLI commands
+
+```bash
+# Health test to HA API
+python3 -m auroran_ha_ai_manager.main healthcheck
+
+# Print HA entity domain inventory
+python3 -m auroran_ha_ai_manager.main inventory
+
+# Run one recommendation cycle (advice-only)
+python3 -m auroran_ha_ai_manager.main cycle
+```
+
 ---
 
 ## Current Status

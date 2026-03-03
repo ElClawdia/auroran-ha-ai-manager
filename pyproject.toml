@@ -8,6 +8,7 @@ dependencies = [
   "httpx>=0.27.0",
   "pydantic>=2.8.0",
   "pydantic-settings>=2.3.0",
+  "paho-mqtt>=2.1.0",
 ]
 
 [project.scripts]

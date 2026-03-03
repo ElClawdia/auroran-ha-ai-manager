@@ -14,7 +14,10 @@ class Recommendation:
 
 
 class Optimizer:
-    """Rule-based optimization engine (MVP)."""
+    """Rule-based optimization engine (MVP).
+
+    Advice-only by default. Real write actions are guarded elsewhere.
+    """
 
     def evaluate(
         self,
@@ -22,14 +25,48 @@ class Optimizer:
         current_price: float | None,
         upcoming_prices: list[float] | None,
     ) -> list[Recommendation]:
-        # Placeholder logic: wire in actual rules from README roadmap.
         if not ha_states:
             return []
 
         recommendations: list[Recommendation] = []
-        # Example stub: if price feed unavailable, do nothing.
-        if current_price is None:
-            return recommendations
 
-        # Add real heuristics here.
+        climate_entities = [s for s in ha_states if str(s.get("entity_id", "")).startswith("climate.")]
+        low_temp_sensors = []
+        for state in ha_states:
+            entity_id = str(state.get("entity_id", ""))
+            if not entity_id.startswith("sensor."):
+                continue
+            try:
+                temp = float(state.get("state"))
+            except (TypeError, ValueError):
+                continue
+            unit = str(state.get("attributes", {}).get("unit_of_measurement", ""))
+            if unit in {"°C", "C", "celsius"} and temp < 19.5:
+                low_temp_sensors.append((entity_id, temp))
+
+        if current_price is not None and upcoming_prices:
+            future_avg = sum(upcoming_prices) / len(upcoming_prices)
+            if future_avg > current_price * 1.15 and climate_entities:
+                recommendations.append(
+                    Recommendation(
+                        target_entity=climate_entities[0]["entity_id"],
+                        action="suggest_preheat",
+                        proposed_value="+0.5°C setpoint",
+                        reason="Upcoming prices appear higher than current price window.",
+                        confidence=0.62,
+                    )
+                )
+
+        if low_temp_sensors and climate_entities:
+            coldest = min(low_temp_sensors, key=lambda x: x[1])
+            recommendations.append(
+                Recommendation(
+                    target_entity=climate_entities[0]["entity_id"],
+                    action="suggest_heat_increase",
+                    proposed_value="+0.5°C setpoint",
+                    reason=f"Low indoor temperature detected at {coldest[0]} ({coldest[1]:.1f}°C).",
+                    confidence=0.71,
+                )
+            )
+
         return recommendations

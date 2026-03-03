@@ -16,10 +16,24 @@ class HomeAssistantClient:
             headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
         )
 
+    def healthcheck(self) -> dict[str, Any]:
+        resp = self._client.get("/api/")
+        resp.raise_for_status()
+        return resp.json()
+
     def get_states(self) -> list[dict[str, Any]]:
         resp = self._client.get("/api/states")
         resp.raise_for_status()
         return resp.json()
+
+    def inventory_by_domain(self) -> dict[str, int]:
+        states = self.get_states()
+        counts: dict[str, int] = {}
+        for entity in states:
+            entity_id = entity.get("entity_id", "")
+            domain = entity_id.split(".", 1)[0] if "." in entity_id else "unknown"
+            counts[domain] = counts.get(domain, 0) + 1
+        return dict(sorted(counts.items(), key=lambda x: x[0]))
 
     def call_service(self, domain: str, service: str, payload: dict[str, Any]) -> dict[str, Any]:
         """Call HA service endpoint. Use only with safety guardrails."""

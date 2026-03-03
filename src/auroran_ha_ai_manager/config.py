@@ -19,5 +19,11 @@ class Settings(BaseSettings):
     slack_webhook_url: str | None = Field(default=None, alias="SLACK_WEBHOOK_URL")
     whatsapp_webhook_url: str | None = Field(default=None, alias="WHATSAPP_WEBHOOK_URL")
 
+    mqtt_host: str | None = Field(default=None, alias="MQTT_HOST")
+    mqtt_port: int = Field(default=1883, alias="MQTT_PORT")
+    mqtt_username: str | None = Field(default=None, alias="MQTT_USERNAME")
+    mqtt_password: str | None = Field(default=None, alias="MQTT_PASSWORD")
+    mqtt_topics: str | None = Field(default=None, alias="MQTT_TOPICS")
+
     auto_apply: bool = Field(default=False, alias="AUTO_APPLY")
     poll_interval_seconds: int = Field(default=300, alias="POLL_INTERVAL_SECONDS")
