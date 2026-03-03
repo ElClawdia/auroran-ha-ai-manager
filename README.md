@@ -200,6 +200,38 @@ Why:
 - `WHATSAPP_WEBHOOK_URL`
 - `AUTO_APPLY`
 
+### Home Assistant Bearer Token setup (recommended)
+
+1. Open Home Assistant in browser.
+2. Go to: **Profile** (click your user at bottom-left).
+3. Scroll to **Long-Lived Access Tokens**.
+4. Click **Create Token**.
+5. Name it for this app, e.g. `auroran-ha-ai-manager`.
+6. Copy token immediately (HA shows it only once).
+
+Set in `.env`:
+
+```bash
+HA_BASE_URL=http://<your-ha-host>:8123
+HA_TOKEN=<paste-long-lived-token-here>
+```
+
+Quick connectivity check (optional):
+
+```bash
+curl -s \
+  -H "Authorization: Bearer $HA_TOKEN" \
+  "$HA_BASE_URL/api/"
+```
+
+Expected response includes `"message": "API running."`
+
+#### Security notes
+- Do **not** commit `.env`.
+- Rotate token if exposed.
+- Prefer dedicated HA user/token for this app.
+- Start in recommendation mode (`AUTO_APPLY=false`).
+
 ---
 
 ## Current Status
