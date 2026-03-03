@@ -40,8 +40,11 @@ from(bucket: "ha_ai_memory")
 - Store high-frequency data in Influx; summarize important conclusions into `*.md` files.
 - Use policy constraints before optimization (safety and user-defined hard rules first).
 
-## Hard rule currently implemented
+## Hard rules currently implemented
 - Bedroom heat pump entity (`climate.ac_12488762` by default) must be OFF between 19:00 and 09:00 Helsinki time.
+- Hallway heat pump is monitored and managed (`climate.ac_12494102` by default).
+- If indoor temperatures are above 21°C, heat pumps are forced OFF.
+- If electricity is expensive, target floor is 20°C and bedroom heat pump is avoided.
 
 ## Next evolution
 - Add price/weather forecast feature vectors into `ha_ai_memory`.

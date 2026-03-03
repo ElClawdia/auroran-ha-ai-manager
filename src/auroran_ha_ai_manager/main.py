@@ -45,6 +45,13 @@ def _inventory(settings: Settings) -> int:
         ha.close()
 
 
+def _get_float_state(by_id: dict[str, dict], entity_id: str) -> float | None:
+    try:
+        return float(by_id.get(entity_id, {}).get("state"))
+    except Exception:
+        return None
+
+
 def _run_cycle(settings: Settings) -> int:
     notifier = Notifier()
     ha = HomeAssistantClient(settings.ha_base_url, settings.ha_token)
@@ -78,6 +85,12 @@ def _run_cycle(settings: Settings) -> int:
         states = ha.get_states()
         by_id = {e.get("entity_id"): e for e in states if e.get("entity_id")}
 
+        # Price + weather context from HA entities.
+        current_price = _get_float_state(by_id, "sensor.electricity_cost_in_cents_per_kwh")
+        if current_price is None:
+            current_price = _get_float_state(by_id, "sensor.energy_spot_price")
+        outdoor_temp = _get_float_state(by_id, "sensor.openweathermap_temperature")
+
         # Hard policy: bedroom heat pump OFF between 19:00-09:00 Helsinki.
         if _in_bedroom_off_window(settings):
             bedroom = by_id.get(settings.bedroom_hp_entity)
@@ -96,8 +109,51 @@ def _run_cycle(settings: Settings) -> int:
                         reason="bedroom_off_window_policy",
                     )
 
-        # TODO: wire real price series from HA/MQTT connectors.
-        current_price = None
+        # Temperature policy: if room temperatures are above threshold, keep both heat pumps off.
+        indoor_refs = [
+            _get_float_state(by_id, "sensor.temperature_tapio_s_office"),
+            _get_float_state(by_id, "sensor.temperature_makuuhuone"),
+            _get_float_state(by_id, "sensor.temperature_olohuone"),
+        ]
+        indoor_vals = [v for v in indoor_refs if v is not None]
+        indoor_max = max(indoor_vals) if indoor_vals else None
+
+        for hp_entity in [settings.bedroom_hp_entity, settings.hallway_hp_entity]:
+            hp = by_id.get(hp_entity)
+            if not hp:
+                continue
+            if indoor_max is not None and indoor_max > settings.comfort_temp_high_c and hp.get("state") != "off":
+                ha.call_service("climate", "set_hvac_mode", {"entity_id": hp_entity, "hvac_mode": "off"})
+                if memory:
+                    memory.write_action("climate.set_hvac_mode", hp_entity, "off", "indoor_above_21_policy")
+
+        # Expensive electricity policy:
+        # - target comfort floor 20C
+        # - avoid bedroom heat pump entirely
+        if current_price is not None and current_price >= settings.expensive_price_c_per_kwh:
+            bedroom = by_id.get(settings.bedroom_hp_entity)
+            if bedroom and bedroom.get("state") != "off":
+                ha.call_service("climate", "set_hvac_mode", {"entity_id": settings.bedroom_hp_entity, "hvac_mode": "off"})
+                if memory:
+                    memory.write_action("climate.set_hvac_mode", settings.bedroom_hp_entity, "off", "expensive_price_policy")
+
+            hallway = by_id.get(settings.hallway_hp_entity)
+            office_temp = _get_float_state(by_id, "sensor.temperature_tapio_s_office")
+            if hallway and office_temp is not None:
+                if office_temp < settings.comfort_temp_low_c:
+                    ha.call_service("climate", "set_hvac_mode", {"entity_id": settings.hallway_hp_entity, "hvac_mode": "heat"})
+                    ha.call_service("climate", "set_temperature", {"entity_id": settings.hallway_hp_entity, "temperature": settings.comfort_temp_low_c})
+                    if memory:
+                        memory.write_action("climate.set_temperature", settings.hallway_hp_entity, str(settings.comfort_temp_low_c), "expensive_price_floor_20")
+                elif hallway.get("state") != "off":
+                    ha.call_service("climate", "set_hvac_mode", {"entity_id": settings.hallway_hp_entity, "hvac_mode": "off"})
+                    if memory:
+                        memory.write_action("climate.set_hvac_mode", settings.hallway_hp_entity, "off", "expensive_price_above_floor")
+
+        # Miner heat note: above 0C outside, prefer relying on miner heat before enabling extra HP heating.
+        if outdoor_temp is not None and outdoor_temp >= 0 and current_price is not None and current_price >= settings.expensive_price_c_per_kwh:
+            notifier.send("Context: Outside >=0C and electricity expensive; prefer miner heat and minimal heat pump usage.")
+
         upcoming_prices: list[float] | None = None
 
         recommendations = Optimizer().evaluate(states, current_price=current_price, upcoming_prices=upcoming_prices)

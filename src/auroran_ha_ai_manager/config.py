@@ -31,8 +31,12 @@ class Settings(BaseSettings):
     influxdb_ai_memory_bucket: str = Field(default="ha_ai_memory", alias="INFLUXDB_AI_MEMORY_BUCKET")
 
     bedroom_hp_entity: str = Field(default="climate.ac_12488762", alias="BEDROOM_HP_ENTITY")
+    hallway_hp_entity: str = Field(default="climate.ac_12494102", alias="HALLWAY_HP_ENTITY")
     bedroom_hp_off_start_hour: int = Field(default=19, alias="BEDROOM_HP_OFF_START_HOUR")
     bedroom_hp_off_end_hour: int = Field(default=9, alias="BEDROOM_HP_OFF_END_HOUR")
+    comfort_temp_high_c: float = Field(default=21.0, alias="COMFORT_TEMP_HIGH_C")
+    comfort_temp_low_c: float = Field(default=20.0, alias="COMFORT_TEMP_LOW_C")
+    expensive_price_c_per_kwh: float = Field(default=10.0, alias="EXPENSIVE_PRICE_C_PER_KWH")
     local_timezone: str = Field(default="Europe/Helsinki", alias="LOCAL_TIMEZONE")
 
     auto_apply: bool = Field(default=False, alias="AUTO_APPLY")
